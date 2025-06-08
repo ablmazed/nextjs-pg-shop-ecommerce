@@ -30,7 +30,7 @@ const Header = async () => {
           <Button asChild>
             <Link href="/cart">
               <ShoppingCart />
-              Sign In Here
+              Sign In Here is by
             </Link>
           </Button>
         </div>
