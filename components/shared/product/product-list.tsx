@@ -2,7 +2,6 @@ import React from 'react'
 import ProductCard from './product-card'
 import { Product } from '@/types'
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 const ProductList = ({ title, data }: { title: string; data: any }) => {
   return (
     <section className="my-10">
