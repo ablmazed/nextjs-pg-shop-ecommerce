@@ -20,13 +20,12 @@ export const metadata: Metadata = {
 }
 
 interface PageProps {
-  searchParams: Promise<{
+  searchParams: {
     callbackUrl?: string
-  }>
+  }
 }
-
 export default async function SignIn({ searchParams }: PageProps) {
-  const { callbackUrl } = await searchParams
+  const { callbackUrl } = searchParams
 
   const session = await auth()
   if (session) {
