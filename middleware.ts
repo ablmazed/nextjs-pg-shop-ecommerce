@@ -3,7 +3,6 @@ import type { NextAuthConfig } from 'next-auth'
 const authConfig = {
   providers: [],
   callbacks: {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     authorized({ request, auth }: any) {
       const protectedPaths = [
         /\/shipping/,
