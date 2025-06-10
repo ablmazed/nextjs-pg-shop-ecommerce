@@ -18,14 +18,12 @@ const authConfig = {
     },
   },
 } satisfies NextAuthConfig
-
 export const { auth: middleware } = NextAuth(authConfig)
-
 export const config = {
   matcher: [
     /*
 Match all request paths except for the ones starting with:
- api (API routes)
+api (API routes)
 next/static (static files)
 next/image (image optimization files)
 favicon.ico (favicon file)
