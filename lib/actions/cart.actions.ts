@@ -1,3 +1,4 @@
+'use server'
 import { auth } from '@/auth'
 import { carts, products } from '@/db/schema'
 import db from '@/db/drizzle'
