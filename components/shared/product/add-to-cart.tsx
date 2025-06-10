@@ -1,9 +1,10 @@
+'use client'
 import { Button } from '@/components/ui/button'
 import { removeItemFromCart, addItemToCart } from '@/lib/actions/cart.actions'
 import { round2 } from '@/lib/utils'
 import { Cart, CartItem } from '@/types'
 import { Loader, Minus, Plus } from 'lucide-react'
-import { useRouter } from 'next/router'
+import { useRouter } from 'next/navigation'
 import { useTransition } from 'react'
 import { toast } from 'sonner'
 
