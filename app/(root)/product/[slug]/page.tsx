@@ -5,11 +5,9 @@ import { Badge } from '@/components/ui/badge'
 import { Card, CardContent } from '@/components/ui/card'
 import { getProductBySlug } from '@/lib/actions/product.actions'
 import { APP_NAME } from '@/lib/constants'
-import { Button } from '@/components/ui/button'
 import AddToCart from '@/components/shared/product/add-to-cart'
 import { round2 } from '@/lib/utils'
 import { getMyCart } from '@/lib/actions/cart.actions'
-import { auth } from '@/auth'
 
 type Props = {
   params: Promise<{
@@ -39,9 +37,7 @@ const ProductDetails = async ({ params }: Props) => {
 
   const product = await getProductBySlug(slug)
   if (!product) notFound()
-
   const cart = await getMyCart()
-  const session = await auth()
 
   return (
     <>

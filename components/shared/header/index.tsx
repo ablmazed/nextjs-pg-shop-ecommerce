@@ -1,8 +1,5 @@
-import { ShoppingCart } from 'lucide-react'
 import Image from 'next/image'
 import Link from 'next/link'
-
-import { Button } from '@/components/ui/button'
 import { APP_NAME } from '@/lib/constants'
 import Menu from './menu'
 
@@ -21,22 +18,11 @@ const Header = async () => {
             {APP_NAME}
           </Link>
         </div>
-        <div className="space-x-2">
-          <Button asChild variant="ghost">
-            <Link href="/cart">
-              <ShoppingCart />
-              Cart
-            </Link>
-          </Button>
 
-          {/* <Button asChild>
-            <Link href="/cart">
-              <ShoppingCart />
-              Sign In Here is by
-            </Link>
-          </Button> */}
+        <div className="space-x-2">
           <Menu />
         </div>
+        <div className="md:hidden block   px-5 pb-2">Search</div>
       </div>
     </header>
   )

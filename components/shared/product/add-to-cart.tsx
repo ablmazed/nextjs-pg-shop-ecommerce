@@ -1,12 +1,12 @@
 'use client'
+
 import { Button } from '@/components/ui/button'
-import { removeItemFromCart, addItemToCart } from '@/lib/actions/cart.actions'
-import { round2 } from '@/lib/utils'
+import { toast } from 'sonner'
+import { addItemToCart, removeItemFromCart } from '@/lib/actions/cart.actions'
 import { Cart, CartItem } from '@/types'
 import { Loader, Minus, Plus } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { useTransition } from 'react'
-import { toast } from 'sonner'
 
 export default function AddToCart({
   cart,
@@ -50,11 +50,12 @@ export default function AddToCart({
         disabled={isPending}
         onClick={() => {
           startTransition(async () => {
-            const res = await addItemToCart({
-              ...item,
-              price: item.price,
-            })
-            toast(toast.success(res.message))
+            const res = await addItemToCart(item)
+            toast(
+              res.success
+                ? toast.success(res.message)
+                : toast.error(res.message)
+            )
             return
           })
         }}
@@ -73,16 +74,13 @@ export default function AddToCart({
       disabled={isPending}
       onClick={() => {
         startTransition(async () => {
-          const res = await addItemToCart({
-            ...item,
-            price: round2(item.price),
-          })
+          const res = await addItemToCart(item)
           if (!res.success) {
             toast(toast.error(res.message))
             return
           }
-          toast(' Event has been', {
-            description: `${item.name} added to the cart`,
+
+          toast(`${item.name} added to the cart`, {
             action: {
               label: 'Go to cart',
               onClick: () => router.push('/cart'),
@@ -92,7 +90,7 @@ export default function AddToCart({
       }}
     >
       {isPending ? <Loader className="animate-spin" /> : <Plus />}
-      Add to cart
+      Add to carts
     </Button>
   )
 }

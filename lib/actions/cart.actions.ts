@@ -9,20 +9,6 @@ import z from 'zod'
 import { round2, formatError } from '../utils'
 import { cartItemSchema } from '../validator'
 
-export async function getMyCart() {
-  const getCookies = await cookies()
-  const sessionCartId = getCookies.get('sessionCartId')?.value
-  if (!sessionCartId) return undefined
-  const session = await auth()
-  const userId = session?.user.id
-  const cart = await db.query.carts.findFirst({
-    where: userId
-      ? eq(carts.userId, userId)
-      : eq(carts.sessionCartId, sessionCartId),
-  })
-  return cart
-}
-
 // CREATE
 
 const calcPrice = (items: z.infer<typeof cartItemSchema>[]) => {
@@ -139,4 +125,18 @@ export const removeItemFromCart = async (productId: string) => {
   } catch (error) {
     return { success: false, message: formatError(error) }
   }
+}
+
+export async function getMyCart() {
+  const getCookies = await cookies()
+  const sessionCartId = getCookies.get('sessionCartId')?.value
+  if (!sessionCartId) return undefined
+  const session = await auth()
+  const userId = session?.user.id
+  const cart = await db.query.carts.findFirst({
+    where: userId
+      ? eq(carts.userId, userId)
+      : eq(carts.sessionCartId, sessionCartId),
+  })
+  return cart
 }

@@ -30,6 +30,22 @@ export const formatNumberWithDecimal = (num: number): string => {
   return decimal ? `${int}.${decimal.padEnd(2, '0')}` : int //12.1 => 12.10
 }
 
+const CURRENCY_FORMATTER = new Intl.NumberFormat('en-US', {
+  currency: 'USD',
+  style: 'currency',
+  minimumFractionDigits: 2,
+})
+
+export function formatCurrency(amount: number | string | null) {
+  if (typeof amount === 'number') {
+    return CURRENCY_FORMATTER.format(amount)
+  } else if (typeof amount === 'string') {
+    return CURRENCY_FORMATTER.format(Number(amount))
+  } else {
+    return 'NaN'
+  }
+}
+
 export const round2 = (value: number | string) => {
   if (typeof value === 'number') {
     return Math.round((value + Number.EPSILON) * 100) / 100 // avoid rounding errors
