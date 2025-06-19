@@ -29,15 +29,21 @@ const calcPrice = (items: z.infer<typeof cartItemSchema>[]) => {
 export const addItemToCart = async (data: z.infer<typeof cartItemSchema>) => {
   try {
     const getCookies = await cookies()
+
     const sessionCartId = getCookies.get('sessionCartId')?.value
+    console.log('sessionCartId:', sessionCartId)
     if (!sessionCartId) throw new Error('Cart Session not found')
     const session = await auth()
     const userId = session?.user.id as string | undefined
     const cart = await getMyCart()
+    console.log('Current Cart:', cart)
     const item = cartItemSchema.parse(data)
     const product = await db.query.products.findFirst({
       where: eq(products.id, item.productId),
     })
+
+    console.log('product:', product)
+
     if (!product) throw new Error('Product not found')
     if (!cart) {
       if (product.stock < 1) throw new Error('Not enough stock')
@@ -47,6 +53,14 @@ export const addItemToCart = async (data: z.infer<typeof cartItemSchema>) => {
         sessionCartId: sessionCartId,
         ...calcPrice([item]),
       })
+
+      console.log('Inserting new cart:', {
+        userId: userId,
+        items: [item],
+        sessionCartId: sessionCartId,
+        ...calcPrice([item]),
+      })
+
       revalidatePath(`/product/${product.slug}`)
       return {
         success: true,
@@ -80,6 +94,7 @@ export const addItemToCart = async (data: z.infer<typeof cartItemSchema>) => {
       }
     }
   } catch (error) {
+    console.error('Add to cart error:', error)
     return { success: false, message: formatError(error) }
   }
 }

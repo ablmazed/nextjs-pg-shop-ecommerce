@@ -1,33 +1,18 @@
-import NextAuth from 'next-auth'
-import type { NextAuthConfig } from 'next-auth'
-const authConfig = {
-  providers: [],
-  callbacks: {
-    authorized({ request, auth }: any) {
-      const protectedPaths = [
-        /\/shipping/,
-        /\/payment/,
-        /\/place-order/,
-        /\/profile/,
-        /\/order\/(.*)/,
-        /\/admin/,
-      ]
-      const { pathname } = request.nextUrl
-      if (protectedPaths.some((p) => p.test(pathname))) return !!auth
-      return true
-    },
-  },
-} satisfies NextAuthConfig
-export const { auth: middleware } = NextAuth(authConfig)
-export const config = {
-  matcher: [
-    /*
-Match all request paths except for the ones starting with:
-api (API routes)
-next/static (static files)
-next/image (image optimization files)
-favicon.ico (favicon file)
-*/
-    '/((?!api|_next/static|_next/image|favicon.ico)._)',
-  ],
+import { NextResponse } from 'next/server'
+import type { NextRequest } from 'next/server'
+import { v4 as uuidv4 } from 'uuid'
+
+export function middleware(request: NextRequest) {
+  const response = NextResponse.next()
+  const sessionCartId = request.cookies.get('sessionCartId')
+
+  if (!sessionCartId) {
+    const newSessionId = uuidv4()
+    response.cookies.set('sessionCartId', newSessionId, {
+      path: '/',
+      maxAge: 60 * 60 * 24 * 7,
+    })
+  }
+
+  return response
 }
