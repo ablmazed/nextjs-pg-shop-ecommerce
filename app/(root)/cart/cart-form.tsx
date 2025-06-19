@@ -13,11 +13,12 @@ import {
 import { removeItemFromCart, addItemToCart } from '@/lib/actions/cart.actions'
 import { formatCurrency } from '@/lib/utils'
 import { Cart } from '@/types'
-import { Link, Loader, Minus, Plus, ArrowRight } from 'lucide-react'
+import { Loader, Minus, Plus, ArrowRight } from 'lucide-react'
 import Image from 'next/image'
 import router from 'next/router'
 import { useTransition } from 'react'
 import { toast } from 'sonner'
+import Link from 'next/link'
 
 export default function CartForm({ cart }: { cart?: Cart }) {
   const [isPending, startTransition] = useTransition()
@@ -52,7 +53,7 @@ export default function CartForm({ cart }: { cart?: Cart }) {
                           src={item.image}
                           alt={item.name}
                           width={50}
-                          height={50}
+                          height={100}
                         />
 
                         <span className="px-2">{item.name}</span>
