@@ -10,9 +10,7 @@ function MyComponent({
 }) {
   const { isLoaded } = useJsApiLoader({
     id: 'google-map-script',
-    googleMapsApiKey:
-      process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY! ||
-      'AIzaSyCBAUCvyw6BDzz_czhx6U1ihOjJzsa5SQU',
+    googleMapsApiKey: process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY!,
   })
 
   const markerRef = useRef(null)
