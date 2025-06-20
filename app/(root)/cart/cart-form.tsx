@@ -15,12 +15,13 @@ import { formatCurrency } from '@/lib/utils'
 import { Cart } from '@/types'
 import { Loader, Minus, Plus, ArrowRight } from 'lucide-react'
 import Image from 'next/image'
-import router from 'next/router'
+import { useRouter } from 'next/navigation'
 import { useTransition } from 'react'
 import { toast } from 'sonner'
 import Link from 'next/link'
 
 export default function CartForm({ cart }: { cart?: Cart }) {
+  const router = useRouter()
   const [isPending, startTransition] = useTransition()
   return (
     <>
