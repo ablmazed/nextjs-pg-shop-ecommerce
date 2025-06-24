@@ -13,15 +13,18 @@ import { formatCurrency, formatDateTime } from '@/lib/utils'
 import { Metadata } from 'next'
 import Link from 'next/link'
 
+type Props = {
+  params: Promise<{
+    pageProps: string
+  }>
+}
+
 export const metadata: Metadata = {
   title: `My Orders - ${APP_NAME}`,
 }
-export default async function OrdersPage({
-  searchParams,
-}: {
-  searchParams: { page: string }
-}) {
-  const page = Number(searchParams.page) || 1
+export default async function OrdersPage({ params }: Props) {
+  const { pageProps } = await params
+  const page = Number(pageProps) || 1
   const orders = await getMyOrders({
     page,
     limit: 6,
