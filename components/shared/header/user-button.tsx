@@ -1,6 +1,6 @@
 import Link from 'next/link'
 // import { headers } from 'next/headers'
-import { auth } from '@/auth'
+
 import { Button } from '@/components/ui/button'
 import {
   DropdownMenu,
@@ -10,6 +10,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import { SignOut } from '@/lib/actions/user.actions'
+import { auth } from '@/auth'
 
 export default async function UserButton() {
   //   const headersList = headers()

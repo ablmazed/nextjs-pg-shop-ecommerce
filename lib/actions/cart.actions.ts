@@ -1,5 +1,5 @@
 'use server'
-import { auth } from '@/auth'
+
 import { carts, products } from '@/db/schema'
 import db from '@/db/drizzle'
 import { eq, and } from 'drizzle-orm'
@@ -8,6 +8,7 @@ import { cookies } from 'next/headers'
 import z from 'zod'
 import { round2, formatError } from '../utils'
 import { cartItemSchema } from '../validator'
+import { auth } from '@/auth'
 
 // CREATE
 

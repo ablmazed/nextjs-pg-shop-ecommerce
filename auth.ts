@@ -1,13 +1,14 @@
+// app/api/auth/[...nextauth]/route.ts
 import { DrizzleAdapter } from '@auth/drizzle-adapter'
 import { compareSync } from 'bcrypt-ts-edge'
 import { eq } from 'drizzle-orm'
 import type { NextAuthConfig } from 'next-auth'
 import NextAuth from 'next-auth'
 import CredentialsProvider from 'next-auth/providers/credentials'
-import db from './db/drizzle'
-import { carts, users } from './db/schema'
 
-import { cookies } from 'next/headers'
+import db from '@/db/drizzle'
+import { carts, users } from '@/db/schema'
+import { getSessionCartIdFromCookies } from '@/lib/getSessionCartId'
 
 export const config = {
   pages: {
@@ -22,17 +23,16 @@ export const config = {
   providers: [
     CredentialsProvider({
       credentials: {
-        email: {
-          type: 'email',
-        },
+        email: { type: 'email' },
         password: { type: 'password' },
       },
       async authorize(credentials) {
-        if (credentials == null) return null
+        if (!credentials) return null
 
         const user = await db.query.users.findFirst({
           where: eq(users.email, credentials.email as string),
         })
+
         if (user && user.password) {
           const isMatch = compareSync(
             credentials.password as string,
@@ -47,6 +47,7 @@ export const config = {
             }
           }
         }
+
         return null
       },
     }),
@@ -65,31 +66,35 @@ export const config = {
         }
 
         token.role = user.role
+
         if (trigger === 'signIn' || trigger === 'signUp') {
-          const getCookies = await cookies()
-          const sessionCartId = getCookies.get('sessionCartId')?.value
+          const sessionCartId = await getSessionCartIdFromCookies()
           if (!sessionCartId) throw new Error('Session Cart Not Found')
+
           const sessionCartExists = await db.query.carts.findFirst({
             where: eq(carts.sessionCartId, sessionCartId),
           })
+
           if (sessionCartExists && !sessionCartExists.userId) {
             const userCartExists = await db.query.carts.findFirst({
               where: eq(carts.userId, user.id),
             })
-            if (userCartExists) {
-              const getCookies = await cookies()
-              getCookies.set('beforeSigninSessionCartId', sessionCartId)
-              getCookies.set('sessionCartId', userCartExists.sessionCartId)
-            } else {
-              db.update(carts)
-                .set({ userId: user.id })
+
+            if (!userCartExists) {
+              await db
+                .update(carts)
+                .set({
+                  userId: user.id,
+                })
                 .where(eq(carts.id, sessionCartExists.id))
             }
+
+            // ⚠️ cookie.set() not allowed here — do this in client after login
           }
         }
       }
 
-      if (session?.user.name && trigger === 'update') {
+      if (session?.user?.name && trigger === 'update') {
         token.name = session.user.name
       }
 
@@ -105,4 +110,5 @@ export const config = {
     },
   },
 } satisfies NextAuthConfig
+
 export const { handlers, auth, signIn, signOut } = NextAuth(config)

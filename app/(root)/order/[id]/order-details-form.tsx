@@ -1,70 +1,12 @@
-# 17. create order details page
+'use client'
 
-1. lib/actions/order.actions.ts
+import {
+  PayPalButtons,
+  PayPalScriptProvider,
+  usePayPalScriptReducer,
+} from '@paypal/react-paypal-js'
 
-   ```ts
-   // GET
-   export async function getOrderById(orderId: string) {
-     return await db.query.orders.findFirst({
-       where: eq(orders.id, orderId),
-       with: {
-         orderItems: true,
-         user: { columns: { name: true, email: true } },
-       },
-     })
-   }
-   ```
-
-2. lib/utils/index.ts
-
-   ```ts
-   export function formatId(id: string) {
-     return `..${id.substring(id.length - 6)}`
-   }
-
-   export const formatDateTime = (dateString: Date) => {
-     const dateTimeOptions: Intl.DateTimeFormatOptions = {
-       month: 'short', // abbreviated month name (e.g., 'Oct')
-       year: 'numeric', // abbreviated month name (e.g., 'Oct')
-       day: 'numeric', // numeric day of the month (e.g., '25')
-       hour: 'numeric', // numeric hour (e.g., '8')
-       minute: 'numeric', // numeric minute (e.g., '30')
-       hour12: true, // use 12-hour clock (true) or 24-hour clock (false)
-     }
-     const dateOptions: Intl.DateTimeFormatOptions = {
-       weekday: 'short', // abbreviated weekday name (e.g., 'Mon')
-       month: 'short', // abbreviated month name (e.g., 'Oct')
-       year: 'numeric', // numeric year (e.g., '2023')
-       day: 'numeric', // numeric day of the month (e.g., '25')
-     }
-     const timeOptions: Intl.DateTimeFormatOptions = {
-       hour: 'numeric', // numeric hour (e.g., '8')
-       minute: 'numeric', // numeric minute (e.g., '30')
-       hour12: true, // use 12-hour clock (true) or 24-hour clock (false)
-     }
-     const formattedDateTime: string = new Date(dateString).toLocaleString(
-       'en-US',
-       dateTimeOptions
-     )
-     const formattedDate: string = new Date(dateString).toLocaleString(
-       'en-US',
-       dateOptions
-     )
-     const formattedTime: string = new Date(dateString).toLocaleString(
-       'en-US',
-       timeOptions
-     )
-     return {
-       dateTime: formattedDateTime,
-       dateOnly: formattedDate,
-       timeOnly: formattedTime,
-     }
-   }
-   ```
-
-3. app/(root)/order/[id]/order-details-form.tsx
-
-```ts
+import { Badge } from '@/components/ui/badge'
 import { Card, CardContent } from '@/components/ui/card'
 import {
   Table,
@@ -74,15 +16,32 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table'
-import { formatCurrency } from '@/lib/utils'
-import { formatId, formatDateTime } from '@/lib/utils/index'
-
-import Link from 'next/link'
-import { Badge } from '@/components/ui/badge'
+import { toast } from 'sonner'
+import { formatCurrency, formatDateTime, formatId } from '@/lib/utils'
 import { Order } from '@/types'
 import Image from 'next/image'
+import Link from 'next/link'
+import {
+  approvePayPalOrder,
+  createPayPalOrder,
+  deliverOrder,
+  updateOrderToPaidByCOD,
+} from '@/lib/actions/order.actions'
+import { useTransition } from 'react'
+import { Button } from '@/components/ui/button'
+import StripePayment from './stripe-payment'
 
-export default function OrderDetailsForm({ order }: { order: Order }) {
+export default function OrderDetailsForm({
+  order,
+  paypalClientId,
+  isAdmin,
+  stripeClientSecret,
+}: {
+  order: Order
+  paypalClientId: string
+  isAdmin: boolean
+  stripeClientSecret: string | null
+}) {
   const {
     shippingAddress,
     orderItems,
@@ -96,6 +55,63 @@ export default function OrderDetailsForm({ order }: { order: Order }) {
     isDelivered,
     deliveredAt,
   } = order
+
+  function PrintLoadingState() {
+    const [{ isPending, isRejected }] = usePayPalScriptReducer()
+    let status = ''
+    if (isPending) {
+      status = 'Loading PayPal...'
+    } else if (isRejected) {
+      status = 'Error in loading PayPal.'
+    }
+    return status
+  }
+  const handleCreatePayPalOrder = async () => {
+    const res = await createPayPalOrder(order.id)
+    if (!res.success) return toast(toast.error(res.message))
+    return res.data
+  }
+  const handleApprovePayPalOrder = async (data: { orderID: string }) => {
+    const res = await approvePayPalOrder(order.id, data)
+    toast(toast.success(res.message))
+  }
+
+  const MarkAsPaidButton = () => {
+    const [isPending, startTransition] = useTransition()
+
+    return (
+      <Button
+        type="button"
+        disabled={isPending}
+        onClick={() =>
+          startTransition(async () => {
+            const res = await updateOrderToPaidByCOD(order.id)
+            toast(toast.success(res.message))
+          })
+        }
+      >
+        {isPending ? 'processing...' : 'Mark As Paid'}
+      </Button>
+    )
+  }
+
+  const MarkAsDeliveredButton = () => {
+    const [isPending, startTransition] = useTransition()
+    return (
+      <Button
+        type="button"
+        disabled={isPending}
+        onClick={() =>
+          startTransition(async () => {
+            const res = await deliverOrder(order.id)
+            toast(toast.success(res.message))
+          })
+        }
+      >
+        {isPending ? 'processing...' : 'Mark As Delivered'}
+      </Button>
+    )
+  }
 
   return (
     <>
@@ -122,6 +138,16 @@ export default function OrderDetailsForm({ order }: { order: Order }) {
               <p>
                 {shippingAddress.streetAddress}, {shippingAddress.city},{' '}
                 {shippingAddress.postalCode}, {shippingAddress.country}{' '}
+              </p>
+              <p className="py-2">
+                <Button asChild variant="outline">
+                  <a
+                    target="_new"
+                    href={`https://maps.google.com?q=${shippingAddress.lat},${shippingAddress.lng}`}
+                  >
+                    Show On Map
+                  </a>
+                </Button>
               </p>
 
               {isDelivered ? (
@@ -158,7 +184,6 @@ export default function OrderDetailsForm({ order }: { order: Order }) {
                             width={50}
                             height={50}
                           ></Image>
-
                           <span className="px-2">{item.name}</span>
                         </Link>
                       </TableCell>
@@ -195,6 +220,30 @@ export default function OrderDetailsForm({ order }: { order: Order }) {
                 <div>Total</div>
                 <div>{formatCurrency(totalPrice)}</div>
               </div>
+              {!isPaid && paymentMethod === 'PayPal' && (
+                <div>
+                  <PayPalScriptProvider options={{ clientId: paypalClientId }}>
+                    <PrintLoadingState />
+                    <PayPalButtons
+                      createOrder={handleCreatePayPalOrder}
+                      onApprove={handleApprovePayPalOrder}
+                    />
+                  </PayPalScriptProvider>
+                </div>
+              )}
+
+              {!isPaid && paymentMethod === 'Stripe' && stripeClientSecret && (
+                <StripePayment
+                  priceInCents={Number(order.totalPrice) * 100}
+                  orderId={order.id}
+                  clientSecret={stripeClientSecret}
+                />
+              )}
+
+              {isAdmin && !isPaid && paymentMethod === 'CashOnDelivery' && (
+                <MarkAsPaidButton />
+              )}
+              {isAdmin && isPaid && !isDelivered && <MarkAsDeliveredButton />}
             </CardContent>
           </Card>
         </div>
@@ -202,35 +251,3 @@ export default function OrderDetailsForm({ order }: { order: Order }) {
     </>
   )
 }
-```
-
-4. app/(root)/order/[id]/page.tsx
-
-   ```ts
-   import { getOrderById } from '@/lib/actions/order.actions'
-   import { notFound } from 'next/navigation'
-   import OrderDetailsForm from './order-details-form'
-   import { auth } from '@/auth'
-   export const metadata = {
-     title: 'Order Details',
-   }
-   const OrderDetailsPage = async ({
-     params: { id },
-   }: {
-     params: {
-       id: string
-     }
-   }) => {
-     const order = await getOrderById(id)
-     if (!order) notFound()
-     const session = await auth()
-     return <OrderDetailsForm order={order} />
-   }
-   export default OrderDetailsPage
-   ```
-
-5. types/index.ts
-
-```ts
-
-```

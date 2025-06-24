@@ -1,16 +1,19 @@
 import * as z from 'zod'
+import { createInsertSchema, createSelectSchema } from 'drizzle-zod'
 import { formatNumberWithDecimal } from './utils'
+import { PAYMENT_METHODS } from './constants'
+import { orderItems, orders } from '@/db/schema'
 
 // USER
 export const signInFormSchema = z.object({
-  email: z.string().min(3, 'Email must be at least 3 characters'),
+  email: z.string().email().min(3, 'Email must be at least 3 characters'),
   password: z.string().min(3, 'Password must be at least 3 characters'),
 })
 
 export const signUpFormSchema = z
   .object({
     name: z.string().min(3, 'Name must be at least 3 characters'),
-    email: z.string().min(3, 'Email must be at least 3 characters'),
+    email: z.string().email().min(3, 'Email must be at least 3 characters'),
     password: z.string().min(3, 'Password must be at least 3 characters'),
     confirmPassword: z
       .string()
@@ -20,6 +23,15 @@ export const signUpFormSchema = z
     message: "Passwords don't match",
     path: ['confirmPassword'],
   })
+export const updateProfileSchema = z.object({
+  name: z.string().min(3, 'Name must be at least 3 characters'),
+  email: z.string().email().min(3, 'Email must be at least 3 characters'),
+})
+
+export const updateUserSchema = updateProfileSchema.extend({
+  id: z.string().min(1, 'Id is required'),
+  role: z.string().min(1, 'Role is required'),
+})
 
 // CART
 export const cartItemSchema = z.object({
@@ -35,7 +47,6 @@ export const cartItemSchema = z.object({
       'Price must have exactly two decimal places (e.g., 49.99)'
     ),
 })
-
 export const shippingAddressSchema = z.object({
   fullName: z.string().min(3, 'Name must be at least 3 characters'),
   streetAddress: z.string().min(3, 'Address must be at least 3 characters'),
@@ -45,3 +56,41 @@ export const shippingAddressSchema = z.object({
   lat: z.number().optional(),
   lng: z.number().optional(),
 })
+
+export const paymentMethodSchema = z
+  .object({
+    type: z.string().min(1, 'Payment method is required'),
+  })
+  .refine((data) => PAYMENT_METHODS.includes(data.type), {
+    path: ['type'],
+    message: 'Invalid payment method',
+  })
+
+export const paymentResultSchema = z.object({
+  id: z.string(),
+  status: z.string(),
+  email_address: z.string(),
+  pricePaid: z.string(),
+})
+
+export const insertOrderSchema = createInsertSchema(
+  orders
+  //   {
+  //   shippingAddress: shippingAddressSchema,
+  //   paymentResult: z
+  //     .object({
+  //       id: z.string(),
+  //       status: z.string(),
+  //       email_address: z.string(),
+  //       pricePaid: z.string(),
+  //     })
+  //     .optional(),
+  // }
+)
+
+export const insertOrderItemSchema = createInsertSchema(
+  orderItems
+  //   {
+  //   price: z.number(),
+  // }
+)
