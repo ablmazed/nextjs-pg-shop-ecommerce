@@ -5,17 +5,17 @@ import { notFound } from 'next/navigation'
 import OrderDetailsForm from './order-details-form'
 import { auth } from '@/auth'
 
+type Props = {
+  params: Promise<{
+    slug: string
+  }>
+}
+
 export const metadata = {
   title: `Order Details - ${APP_NAME}`,
 }
 
-const OrderDetailsPage = async ({
-  params: { id },
-}: {
-  params: {
-    id: string
-  }
-}) => {
+const OrderDetailsPage = async ({ params }: Props) => {
   const session = await auth()
   const order = await getOrderById(id)
   if (!order) notFound()
