@@ -7,7 +7,7 @@ import { auth } from '@/auth'
 
 type Props = {
   params: Promise<{
-    slug: string
+    id: string
   }>
 }
 
@@ -16,6 +16,7 @@ export const metadata = {
 }
 
 const OrderDetailsPage = async ({ params }: Props) => {
+  const { id } = await params
   const session = await auth()
   const order = await getOrderById(id)
   if (!order) notFound()
