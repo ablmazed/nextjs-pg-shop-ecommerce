@@ -38,7 +38,7 @@ export default async function AdminProductsPage({ searchParams }: Props) {
       <div className="flex-between">
         <h1 className="h2-bold">Products</h1>
         <Button asChild variant="default">
-          <Link href="/admin/products/create">Create Product</Link>
+          <Link href="/admin/products/create">Create Products</Link>
         </Button>
       </div>
       <div>
