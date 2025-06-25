@@ -17,6 +17,28 @@ import { PaymentResult } from '@/types'
 import { PAGE_SIZE } from '../constants'
 
 // GET
+
+export async function getAllOrders({
+  limit = PAGE_SIZE,
+  page,
+}: {
+  limit?: number
+  page: number
+}) {
+  const data = await db.query.orders.findMany({
+    orderBy: [desc(products.createdAt)],
+    limit,
+    offset: (page - 1) * limit,
+    with: { user: { columns: { name: true } } },
+  })
+  const dataCount = await db.select({ count: count() }).from(orders)
+
+  return {
+    data,
+    totalPages: Math.ceil(dataCount[0].count / limit),
+  }
+}
+
 export async function getOrderById(orderId: string) {
   return await db.query.orders.findFirst({
     where: eq(orders.id, orderId),
@@ -278,5 +300,19 @@ export async function updateOrderToPaidByCOD(orderId: string) {
     return { success: true, message: 'Order paid successfully' }
   } catch (err) {
     return { success: false, message: formatError(err) }
+  }
+}
+
+// DELETE
+export async function deleteOrder(id: string) {
+  try {
+    await db.delete(orders).where(eq(orders.id, id))
+    revalidatePath('/admin/orders')
+    return {
+      success: true,
+      message: 'Order deleted successfully',
+    }
+  } catch (error) {
+    return { success: false, message: formatError(error) }
   }
 }
