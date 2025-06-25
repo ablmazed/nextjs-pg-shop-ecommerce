@@ -6,9 +6,9 @@ import OrderDetailsForm from './order-details-form'
 import { auth } from '@/auth'
 
 type Props = {
-  params: Promise<{
+  params: {
     id: string
-  }>
+  }
 }
 
 const session = await auth()
