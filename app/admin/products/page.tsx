@@ -14,23 +14,25 @@ import {
 import { deleteProduct, getAllProducts } from '@/lib/actions/product.actions'
 import { formatId } from '@/lib/utils'
 
-export default async function AdminProductsPage({
-  searchParams,
-}: {
-  searchParams: {
-    page: string
+type Props = {
+  searchParams: Promise<{
+    page: number
     query: string
     category: string
-  }
-}) {
-  const page = Number(searchParams.page) || 1
-  const searchText = searchParams.query || ''
-  const category = searchParams.category || ''
+  }>
+}
+
+export default async function AdminProductsPage({ searchParams }: Props) {
+  const { page } = (await searchParams) || 1
+  const { query } = (await searchParams) || ''
+  const { category } = (await searchParams) || ''
+
   const products = await getAllProducts({
-    query: searchText,
-    category,
     page,
+    query,
+    category,
   })
+
   return (
     <div className="space-y-2">
       <div className="flex-between">
