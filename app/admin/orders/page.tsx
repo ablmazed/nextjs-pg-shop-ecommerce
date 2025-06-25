@@ -22,7 +22,7 @@ export const metadata: Metadata = {
 
 type Props = {
   params: Promise<{
-    page: number
+    page: string
   }>
 }
 
