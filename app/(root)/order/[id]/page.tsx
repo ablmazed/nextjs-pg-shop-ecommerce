@@ -6,19 +6,18 @@ import OrderDetailsForm from './order-details-form'
 import { auth } from '@/auth'
 
 type Props = {
-  params: {
+  params: Promise<{
     id: string
-  }
+  }>
 }
-
-const session = await auth()
 
 export const metadata = {
   title: `Order Details - ${APP_NAME}`,
 }
 
 const OrderDetailsPage = async ({ params }: Props) => {
-  const { id } = params
+  // params এখন Promise, তাই await করতে হবে
+  const { id } = await params
   const session = await auth()
   const order = await getOrderById(id)
   if (!order) notFound()
