@@ -11,6 +11,8 @@ type Props = {
   }>
 }
 
+const session = await auth()
+
 export const metadata = {
   title: `Order Details - ${APP_NAME}`,
 }

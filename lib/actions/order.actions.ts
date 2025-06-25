@@ -271,25 +271,17 @@ export async function approvePayPalOrder(
   }
 }
 
-export async function deliverOrder(orderId: string) {
+// DELETE
+export async function deleteOrder(id: string) {
   try {
-    const order = await db.query.orders.findFirst({
-      where: eq(orders.id, orderId),
-    })
-    if (!order) throw new Error('Order not found')
-    if (!order.isPaid) throw new Error('Order is not paid')
-
-    await db
-      .update(orders)
-      .set({
-        isDelivered: true,
-        deliveredAt: new Date(),
-      })
-      .where(eq(orders.id, orderId))
-    revalidatePath(`/order/${orderId}`)
-    return { success: true, message: 'Order delivered successfully' }
-  } catch (err) {
-    return { success: false, message: formatError(err) }
+    await db.delete(orders).where(eq(orders.id, id))
+    revalidatePath('/admin/orders')
+    return {
+      success: true,
+      message: 'Order deleted successfully',
+    }
+  } catch (error) {
+    return { success: false, message: formatError(error) }
   }
 }
 
@@ -303,16 +295,25 @@ export async function updateOrderToPaidByCOD(orderId: string) {
   }
 }
 
-// DELETE
-export async function deleteOrder(id: string) {
+export async function deliverOrder(orderId: string) {
   try {
-    await db.delete(orders).where(eq(orders.id, id))
-    revalidatePath('/admin/orders')
-    return {
-      success: true,
-      message: 'Order deleted successfully',
-    }
-  } catch (error) {
-    return { success: false, message: formatError(error) }
+    const order = await db.query.orders.findFirst({
+      where: eq(orders.id, orderId),
+    })
+    if (!order) throw new Error('Order not found')
+    if (!order.isPaid) throw new Error('Order is not paid')
+    order.isDelivered = true
+    order.deliveredAt = new Date()
+    await db
+      .update(orders)
+      .set({
+        isDelivered: true,
+        deliveredAt: new Date(),
+      })
+      .where(eq(orders.id, orderId))
+    revalidatePath(`/order/${orderId}`)
+    return { success: true, message: 'Order delivered successfully' }
+  } catch (err) {
+    return { success: false, message: formatError(err) }
   }
 }
