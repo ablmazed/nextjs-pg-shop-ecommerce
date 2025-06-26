@@ -151,7 +151,7 @@ export const updateUserSchema = updateProfileSchema.extend({
 })
 
 // PRODUCT
-export const insertProductSchema = createInsertSchema(products, {
+export const insertProductSchema = createSelectSchema(products, {
   // images: z.array(z.string()).min(1, 'Product must have at least one image'),
   // stock: z.coerce.number().min(0, 'Stock must be at least 0'),
 }).omit({
@@ -161,7 +161,7 @@ export const insertProductSchema = createInsertSchema(products, {
   createdAt: true,
 })
 
-export const updateProductSchema = createInsertSchema(products, {
+export const updateProductSchema = createSelectSchema(products, {
   // images: z.array(z.string()).min(1, 'Product must have at least one image'),
   // stock: z.coerce.number().min(0, 'Stock must be at least 0'),
 }).omit({

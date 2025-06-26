@@ -14,9 +14,10 @@ import db from '@/db/drizzle'
 import { hashSync } from 'bcrypt-ts-edge'
 import { formatError } from '../utils'
 import { ShippingAddress } from '@/types'
-import { and, eq } from 'drizzle-orm'
+import { and, count, desc, eq } from 'drizzle-orm'
 import { revalidatePath } from 'next/cache'
 import z from 'zod'
+import { PAGE_SIZE } from '../constants'
 
 export async function signInWithCredentials(
   prevState: unknown,
@@ -146,6 +147,40 @@ export async function updateProfile(user: { name: string; email: string }) {
     return {
       success: true,
       message: 'User updated successfully',
+    }
+  } catch (error) {
+    return { success: false, message: formatError(error) }
+  }
+}
+
+export async function getAllUsers({
+  limit = PAGE_SIZE,
+  page,
+}: {
+  limit?: number
+  page: number
+}) {
+  const data = await db.query.users.findMany({
+    orderBy: [desc(users.createdAt)],
+    limit,
+    offset: (page - 1) * limit,
+  })
+  const dataCount = await db.select({ count: count() }).from(users)
+  return {
+    data,
+    totalPages: Math.ceil(dataCount[0].count / limit),
+  }
+}
+
+// DELETE
+
+export async function deleteUser(id: string) {
+  try {
+    await db.delete(users).where(eq(users.id, id))
+    revalidatePath('/admin/users')
+    return {
+      success: true,
+      message: 'User deleted successfully',
     }
   } catch (error) {
     return { success: false, message: formatError(error) }
