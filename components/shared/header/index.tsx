@@ -14,15 +14,15 @@ import {
 import { Button } from '@/components/ui/button'
 import { MenuIcon } from 'lucide-react'
 import { getAllCategories } from '@/lib/actions/product.actions'
-// import Search from './search'
+import Search from './search'
 
 const Header = async () => {
   const categories = await getAllCategories()
 
   return (
     <header className="w-full border-b">
-      <div className="wrapper flex-between">
-        <div className="flex-start">
+      <div className="wrapper flex items-center justify-between">
+        <div className="flex items-center">
           <Drawer direction="left">
             <DrawerTrigger asChild>
               <Button variant="outline">
@@ -51,7 +51,8 @@ const Header = async () => {
               </DrawerHeader>
             </DrawerContent>
           </Drawer>
-          <Link href="/" className="flex-start">
+
+          <Link href="/" className="flex items-center">
             <Image
               src="/assets/icons/logo.svg"
               width={48}
@@ -61,10 +62,19 @@ const Header = async () => {
             {APP_NAME}
           </Link>
         </div>
-        <div className="hidden md:block">Search</div>
+
+        <div className="hidden md:block">
+          <Search />
+        </div>
         <Menu />
       </div>
-      <div className="md:hidden block   px-5 pb-2">Search</div>
+      <div className="md:hidden block   px-5 pb-2">
+        <Search />
+      </div>
+
+      <div className="md:hidden block   px-5 pb-2">
+        <Search />
+      </div>
     </header>
   )
 }
