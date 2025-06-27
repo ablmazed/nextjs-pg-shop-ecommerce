@@ -6,6 +6,7 @@ import {
   shippingAddressSchema,
   signInFormSchema,
   signUpFormSchema,
+  updateUserSchema,
 } from '../validator'
 import { isRedirectError } from 'next/dist/client/components/redirect-error'
 import { users } from '@/db/schema'
@@ -17,7 +18,7 @@ import { ShippingAddress } from '@/types'
 import { and, count, desc, eq } from 'drizzle-orm'
 import { revalidatePath } from 'next/cache'
 import z from 'zod'
-import { PAGE_SIZE } from '../constants'
+// import { PAGE_SIZE } from '../constants'
 
 export async function signInWithCredentials(
   prevState: unknown,
@@ -153,6 +154,8 @@ export async function updateProfile(user: { name: string; email: string }) {
   }
 }
 
+const PAGE_SIZE = 10 // ডিফল্ট পেজ সাইজ
+
 export async function getAllUsers({
   limit = PAGE_SIZE,
   page,
@@ -160,17 +163,64 @@ export async function getAllUsers({
   limit?: number
   page: number
 }) {
-  const data = await db.query.users.findMany({
-    orderBy: [desc(users.createdAt)],
-    limit,
-    offset: (page - 1) * limit,
-  })
-  const dataCount = await db.select({ count: count() }).from(users)
-  return {
-    data,
-    totalPages: Math.ceil(dataCount[0].count / limit),
+  // Input validation
+  if (page < 1) {
+    throw new Error('Page number must be greater than 0')
+  }
+
+  if (limit < 1 || limit > 100) {
+    throw new Error('Limit must be between 1 and 100')
+  }
+
+  try {
+    // Parallel execution for better performance
+    const [data, totalCountResult] = await Promise.all([
+      db.query.users.findMany({
+        orderBy: [desc(users.createdAt)],
+        limit,
+        offset: (page - 1) * limit,
+      }),
+      db.select({ count: count() }).from(users),
+    ])
+
+    const totalCount = totalCountResult[0]?.count || 0
+    const totalPages = Math.ceil(totalCount / limit)
+
+    return {
+      data,
+      totalPages,
+      totalCount,
+      currentPage: page,
+      hasNextPage: page < totalPages,
+      hasPreviousPage: page > 1,
+    }
+  } catch (error) {
+    console.error('Error fetching users:', error)
+    throw new Error('Failed to fetch users')
   }
 }
+
+// Type definition for better TypeScript support
+export type GetAllUsersResult = Awaited<ReturnType<typeof getAllUsers>>
+
+// export async function getAllUsers({
+//   limit = PAGE_SIZE,
+//   page,
+// }: {
+//   limit?: number
+//   page: number
+// }) {
+//   const data = await db.query.users.findMany({
+//     orderBy: [desc(users.createdAt)],
+//     limit,
+//     offset: (page - 1) * limit,
+//   })
+//   const dataCount = await db.select({ count: count() }).from(users)
+//   return {
+//     data,
+//     totalPages: Math.ceil(dataCount[0].count / limit),
+//   }
+// }
 
 // DELETE
 
@@ -181,6 +231,26 @@ export async function deleteUser(id: string) {
     return {
       success: true,
       message: 'User deleted successfully',
+    }
+  } catch (error) {
+    return { success: false, message: formatError(error) }
+  }
+}
+
+export async function updateUser(user: z.infer<typeof updateUserSchema>) {
+  try {
+    await db
+      .update(users)
+      .set({
+        name: user.name,
+        role: user.role,
+      })
+      .where(and(eq(users.id, user.id)))
+
+    revalidatePath('/admin/users')
+    return {
+      success: true,
+      message: 'User updated successfully',
     }
   } catch (error) {
     return { success: false, message: formatError(error) }
