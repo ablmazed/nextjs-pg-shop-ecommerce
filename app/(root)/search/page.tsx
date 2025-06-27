@@ -6,6 +6,7 @@ import { APP_NAME } from '@/lib/constants'
 import Link from 'next/link'
 
 const sortOrders = ['newest', 'lowest', 'highest', 'rating']
+
 const prices = [
   {
     name: '$1 to $100',
@@ -23,20 +24,25 @@ const prices = [
 
 const ratings = [4, 3, 2, 1]
 
-type Props = {
-  searchParams: {
+export async function generateMetadata({
+  searchParams,
+}: {
+  searchParams: Promise<{
     q?: string
     category?: string
     price?: string
     rating?: string
     sort?: string
     page?: string
-  }
-}
+  }>
+}) {
+  const {
+    q = 'all',
+    category = 'all',
+    price = 'all',
+    rating = 'all',
+  } = await searchParams
 
-export async function generateMetadata({
-  searchParams: { q = 'all', category = 'all', price = 'all', rating = 'all' },
-}: Props) {
   if (
     (q !== 'all' && q !== '') ||
     category !== 'all' ||
@@ -59,15 +65,26 @@ export async function generateMetadata({
 }
 
 export default async function SearchPage({
-  searchParams: {
+  searchParams,
+}: {
+  searchParams: Promise<{
+    q?: string
+    category?: string
+    price?: string
+    rating?: string
+    sort?: string
+    page?: string
+  }>
+}) {
+  const {
     q = 'all',
     category = 'all',
     price = 'all',
     rating = 'all',
     sort = 'newest',
     page = '1',
-  },
-}: Props) {
+  } = await searchParams
+
   const getFilterUrl = ({
     c,
     s,
@@ -89,6 +106,7 @@ export default async function SearchPage({
     if (s) params.sort = s
     return `/search?${new URLSearchParams(params).toString()}`
   }
+
   const categories = await getAllCategories()
   const products = await getAllProducts({
     category,
@@ -98,6 +116,7 @@ export default async function SearchPage({
     page: Number(page),
     sort,
   })
+
   return (
     <div className="grid md:grid-cols-5 md:gap-5">
       <div>
@@ -173,10 +192,10 @@ export default async function SearchPage({
           </ul>
         </div>
       </div>
+
       <div className="md:col-span-4 space-y-4">
         <div className="flex-between flex-col md:flex-row my-4">
           <div className="flex items-center">
-            {/* {data.length === 0 ? 'No' : countProducts} Results */}
             {q !== 'all' && q !== '' && 'Query : ' + q}
             {category !== 'all' &&
               category !== '' &&
@@ -213,6 +232,7 @@ export default async function SearchPage({
             <ProductCard key={product.id} product={product} />
           ))}
         </div>
+
         {products!.totalPages! > 1 && (
           <Pagination page={page} totalPages={products!.totalPages} />
         )}
