@@ -11,6 +11,7 @@ import {
 } from '@/components/ui/dropdown-menu'
 import { SignOut } from '@/lib/actions/user.actions'
 import { auth } from '@/auth'
+import ModeToggle from './mode-toggle'
 
 export default async function UserButton() {
   //   const headersList = headers()
@@ -76,6 +77,7 @@ export default async function UserButton() {
               </Button>
             </form>
           </DropdownMenuItem>
+          <ModeToggle />
         </DropdownMenuContent>
       </DropdownMenu>
     </div>
