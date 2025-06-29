@@ -1,8 +1,8 @@
-import * as z from 'zod'
+import { z } from 'zod'
 import { createInsertSchema, createSelectSchema } from 'drizzle-zod'
 import { formatNumberWithDecimal } from './utils'
 import { PAYMENT_METHODS } from './constants'
-import { orderItems, orders, products } from '@/db/schema'
+import { orderItems, orders, products, reviews } from '@/db/schema'
 
 // USER
 export const signInFormSchema = z.object({
@@ -98,7 +98,7 @@ export const paymentResultSchema = z.object({
 
 export const insertOrderSchema = createInsertSchema(
   orders
-  //   {
+  //    {
   //   shippingAddress: shippingAddressSchema,
   //   paymentResult: z
   //     .object({
@@ -113,7 +113,7 @@ export const insertOrderSchema = createInsertSchema(
 
 export const insertOrderItemSchema = createInsertSchema(
   orderItems
-  //    {
+  //   {
   //   price: z.number(),
   // }
 )
@@ -122,4 +122,41 @@ export const updateUserSchema = updateProfileSchema.extend({
   id: z.string().min(1, 'Id is required'),
   name: z.string().min(3, 'Name must be at least 3 characters'),
   role: z.string().min(1, 'Role is required'),
+})
+
+// export const insertReviewSchema = createInsertSchema(
+//   reviews
+//   //   {
+//   //   rating: z.coerce
+//   //     .number()
+//   //     .int()
+//   //     .min(1, 'Rating must be at least 1')
+//   //     .max(5, 'Rating must be at most 5'),
+//   // }
+// )
+
+// export const insertReviewSchema = z.object({
+//   id: z.string().uuid().optional(),
+//   userId: z.string().uuid(),
+//   productId: z.string().uuid(),
+//   rating: z.number().int().min(1).max(5),
+//   title: z.string().min(1, 'Title is required').max(100, 'Title too long'),
+//   description: z
+//     .string()
+//     .min(1, 'Description is required')
+//     .max(1000, 'Description too long'),
+//   isVerifiedPurchase?: z.boolean().optional().default(false),
+//   createdAt: z.date().optional(),
+// })
+
+// আপনার validator file এ insertReviewSchema check করুন
+export const insertReviewSchema = z.object({
+  userId: z.string(),
+  productId: z.string(),
+  title: z.string().min(1, 'Title is required'),
+  description: z.string().min(1, 'Description is required'),
+  rating: z.number().min(1).max(5),
+  isVerifiedPurchase: z.boolean().optional(), // অথবা .default(false)
+  id: z.string().optional(),
+  createdAt: z.date().optional(),
 })

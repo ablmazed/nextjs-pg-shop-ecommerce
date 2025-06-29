@@ -1,250 +1,3 @@
-# 30. rate and review products
-
-- Ctrl + Shift + P → "TypeScript: Restart TS Server"
-
-1. app/loading.tsx
-
-   ```ts
-   const Loading = () => {
-     return (
-       <div className="flex flex-col items-center justify-center min-h-screen ">
-         <div className="p-6 rounded-lg shadow-md w-1/3 text-center">
-           Loading...
-         </div>
-       </div>
-     )
-   }
-
-   export default Loading
-   ```
-
-2. app/not-found.tsx
-
-   ```ts
-   'use client'
-   import React from 'react'
-
-   import { Button } from '@/components/ui/button'
-
-   export default function NotFound() {
-     return (
-       <div className="flex flex-col items-center justify-center min-h-screen ">
-         <div className="p-6 rounded-lg shadow-md w-1/3 text-center">
-           <h1 className="text-3xl font-bold mb-4">Not Found</h1>
-           <p className="text-destructive">Could not find requested resource</p>
-           <Button
-             variant="outline"
-             className="mt-4 ml-2"
-             onClick={() => (window.location.href = '/')}
-           >
-             Back to home
-           </Button>
-         </div>
-       </div>
-     )
-   }
-   ```
-
-3. db/schema.ts
-
-   ```ts
-   export const reviews = pgTable('reviews', {
-     id: uuid('id').defaultRandom().primaryKey().notNull(),
-     userId: uuid('userId')
-       .notNull()
-       .references(() => users.id, { onDelete: 'cascade' }),
-     productId: uuid('productId')
-       .notNull()
-       .references(() => products.id, { onDelete: 'cascade' }),
-     rating: integer('rating').notNull(),
-     title: text('title').notNull(),
-     description: text('slug').notNull(),
-     isVerifiedPurchase: boolean('isVerifiedPurchase').notNull().default(true),
-     createdAt: timestamp('createdAt').notNull().defaultNow(),
-   })
-   export const productRelations = relations(products, ({ many }) => ({
-     reviews: many(reviews),
-   }))
-   export const reviewsRelations = relations(reviews, ({ one }) => ({
-     user: one(users, { fields: [reviews.userId], references: [users.id] }),
-     product: one(products, {
-       fields: [reviews.productId],
-       references: [products.id],
-     }),
-   }))
-   ```
-
-4. lib/validator.ts
-
-   ```ts
-
-   ```
-
-// export const insertReviewSchema = createInsertSchema(
-// reviews
-// // {
-// // rating: z.coerce
-// // .number()
-// // .int()
-// // .min(1, 'Rating must be at least 1')
-// // .max(5, 'Rating must be at most 5'),
-// // }
-// )
-
-export const insertReviewSchema = z.object({
-id: z.string().uuid().optional(),
-userId: z.string().uuid(),
-productId: z.string().uuid(),
-rating: z.number().int().min(1).max(5),
-title: z.string().min(1, 'Title is required').max(100, 'Title too long'),
-description: z
-.string()
-.min(1, 'Description is required')
-.max(1000, 'Description too long'),
-isVerifiedPurchase: z.boolean().optional().default(false),
-createdAt: z.date().optional(),
-})
-
-````
-
-5. types/index.ts
-
-```ts
-// PRODUCTS
-export type Review = InferSelectModel<typeof reviews> & {
-  user?: { name: string }
-}
-export type InsertReviewSchema = z.infer<typeof insertReviewSchema>
-````
-
-6. lib/actions/review.actions.ts
-
-   ```ts
-   'use server'
-   export async function createUpdateReview(
-     data: z.infer<typeof insertReviewSchema>
-   ) {
-     try {
-       const session = await auth()
-       if (!session) throw new Error('User is not authenticated')
-
-       const review = insertReviewSchema.parse({
-         ...data,
-         userId: session?.user.id,
-       })
-       const product = await db.query.products.findFirst({
-         where: eq(products.id, review.productId),
-       })
-       if (!product) throw new Error('Product not found')
-       const reviewExists = await db.query.reviews.findFirst({
-         where: and(
-           eq(reviews.productId, review.productId),
-           eq(reviews.userId, review.userId)
-         ),
-       })
-       await db.transaction(async (tx) => {
-         if (reviewExists) {
-           await tx
-             .update(reviews)
-             .set({
-               description: review.description,
-               title: review.title,
-               rating: review.rating,
-             })
-             .where(eq(reviews.id, reviewExists.id))
-         } else {
-           await tx.insert(reviews).values(review)
-         }
-         const averageRating = db.$with('average_rating').as(
-           db
-             .select({ value: sql`avg(${reviews.rating})`.as('value') })
-             .from(reviews)
-             .where(eq(reviews.productId, review.productId))
-         )
-         const numReviews = db.$with('num_reviews').as(
-           db
-             .select({ value: sql`count(*)`.as('value') })
-             .from(reviews)
-             .where(eq(reviews.productId, review.productId))
-         )
-         await tx
-           .with(averageRating, numReviews)
-           .update(products)
-           .set({
-             rating: sql`(select * from ${averageRating})`,
-             numReviews: sql`(select * from ${numReviews})`,
-           })
-           .where(eq(products.id, review.productId))
-       })
-
-       revalidatePath(`/product/${product.slug}`)
-       return {
-         success: true,
-         message: 'Review updated successfully',
-       }
-     } catch (error) {
-       return {
-         success: false,
-         message: formatError(error),
-       }
-     }
-   }
-
-   export async function getReviews({
-     productId,
-     limit = PAGE_SIZE,
-     page,
-   }: {
-     productId: string
-     limit?: number
-     page: number
-   }) {
-     const data = await db.query.reviews.findMany({
-       where: eq(reviews.productId, productId),
-       with: { user: { columns: { name: true } } },
-       orderBy: [desc(reviews.createdAt)],
-       limit,
-       offset: (page - 1) * limit,
-     })
-     const dataCount = await db
-       .select({ count: count() })
-       .from(reviews)
-       .where(eq(reviews.productId, productId))
-     return {
-       data,
-       totalPages: Math.ceil(dataCount[0].count / limit),
-     }
-   }
-   export const getUserReviewByProductId = async ({
-     productId,
-   }: {
-     productId: string
-   }) => {
-     const session = await auth()
-     if (!session) throw new Error('User is not authenticated')
-
-     return await db.query.reviews.findFirst({
-       where: and(
-         eq(reviews.productId, productId),
-         eq(reviews.userId, session?.user.id!)
-       ),
-     })
-   }
-   ```
-
-7. lib/constants/index.ts
-
-   ```ts
-   export const reviewFormDefaultValues = {
-     title: '',
-     comment: '',
-     rating: 0,
-   }
-   ```
-
-8. app/(root)/product/[slug]/review-list.tsx
-
-```tsx
 'use client'
 
 import Rating from '@/components/shared/product/rating'
@@ -281,7 +34,7 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { Textarea } from '@/components/ui/textarea'
-import { useToast } from '@/components/ui/use-toast'
+import { toast } from 'sonner'
 import {
   createUpdateReview,
   getReviews,
@@ -318,10 +71,7 @@ export default function ReviewList({
       setReviews([...res.data])
       setTotalPages(res.totalPages)
     } catch (err) {
-      toast({
-        variant: 'destructive',
-        description: 'Error in fetching reviews',
-      })
+      toast('custom', { description: 'review error' })
     }
   }
   useEffect(() => {
@@ -347,20 +97,13 @@ export default function ReviewList({
     defaultValues: reviewFormDefaultValues,
   })
   const [open, setOpen] = useState(false)
-  const { toast } = useToast()
 
   const onSubmit: SubmitHandler<CustomerReview> = async (values) => {
     const res = await createUpdateReview({ ...values, productId })
-    if (!res.success)
-      return toast({
-        variant: 'destructive',
-        description: res.message,
-      })
+    if (!res.success) return toast(toast.error(res.message))
     setOpen(false)
     reload()
-    toast({
-      description: res.message,
-    })
+    toast(toast.success(res.message))
   }
 
   const handleOpenForm = async () => {
@@ -521,28 +264,3 @@ export default function ReviewList({
     </div>
   )
 }
-```
-
-9. app/(root)/product/[slug]/page.tsx
-
-   ```ts
-   import { auth } from '@/auth'
-     const session = await auth()
-
-   <section className="mt-10">
-     <h2 className="h2-bold  mb-5">Customer Reviews</h2>
-     <ReviewList
-       productId={product.id}
-       productSlug={product.slug}
-       userId={session?.user.id!}
-     />
-   </section>
-   ```
-
-10. components/shared/product/rating
-
-```tsx
-
-```
-
-11. npx drizzle-kit push

@@ -1,6 +1,7 @@
-import { carts, orderItems, orders, products } from '@/db/schema'
+import { carts, orderItems, orders, products, reviews } from '@/db/schema'
 import {
   cartItemSchema,
+  insertReviewSchema,
   paymentResultSchema,
   shippingAddressSchema,
 } from '@/lib/validator'
@@ -9,9 +10,9 @@ import { z } from 'zod'
 
 // PRODUCTS
 export type Product = InferSelectModel<typeof products>
-// export type Review = InferSelectModel<typeof reviews> & {
-//   user?: { name: string }
-// }
+export type Review = InferSelectModel<typeof reviews> & {
+  user?: { name: string }
+}
 
 // CART
 export type Cart = InferSelectModel<typeof carts>
@@ -27,3 +28,5 @@ export type Order = InferSelectModel<typeof orders> & {
   user: { name: string | null; email: string }
 }
 export type OrderItem = InferSelectModel<typeof orderItems>
+
+export type InsertReviewSchema = z.infer<typeof insertReviewSchema>

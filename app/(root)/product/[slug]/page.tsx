@@ -8,6 +8,8 @@ import { APP_NAME } from '@/lib/constants'
 import AddToCart from '@/components/shared/product/add-to-cart'
 import { round2 } from '@/lib/utils'
 import { getMyCart } from '@/lib/actions/cart.actions'
+import ReviewList from './review-list'
+import { auth } from '@/auth'
 
 type Props = {
   params: Promise<{
@@ -38,6 +40,7 @@ const ProductDetails = async ({ params }: Props) => {
   const product = await getProductBySlug(slug)
   if (!product) notFound()
   const cart = await getMyCart()
+  const session = await auth()
 
   return (
     <>
@@ -108,6 +111,14 @@ const ProductDetails = async ({ params }: Props) => {
             </Card>
           </div>
         </div>
+      </section>
+      <section className="mt-10">
+        <h2 className="h2-bold  mb-5">Customer Reviews</h2>
+        <ReviewList
+          productId={product.id}
+          productSlug={product.slug}
+          userId={session?.user.id!}
+        />
       </section>
     </>
   )

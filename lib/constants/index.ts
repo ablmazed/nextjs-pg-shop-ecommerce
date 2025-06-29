@@ -34,3 +34,19 @@ export const PAGE_SIZE = Number(process.env.PAGE_SIZE) || 3
 export const USER_ROLES = process.env.USER_ROLES
   ? process.env.USER_ROLES.split(', ')
   : ['admin', 'user']
+
+// export const reviewFormDefaultValues = {
+//   title: '',
+//   comment: '',
+//   rating: 0,
+// }
+
+// constants file এ
+export const reviewFormDefaultValues = {
+  userId: '',
+  productId: '',
+  title: '',
+  description: '',
+  rating: 1,
+  isVerifiedPurchase: false, // যদি schema তে থাকে
+}
