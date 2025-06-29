@@ -15,6 +15,7 @@ import { Button } from '@/components/ui/button'
 import { MenuIcon } from 'lucide-react'
 import { getAllCategories } from '@/lib/actions/product.actions'
 import Search from './search'
+import ModeToggle from './mode-toggle'
 
 const Header = async () => {
   const categories = await getAllCategories()
@@ -70,6 +71,9 @@ const Header = async () => {
       </div>
       <div className="md:hidden block   px-5 pb-2">
         <Search />
+      </div>
+      <div>
+        <ModeToggle />
       </div>
     </header>
   )
