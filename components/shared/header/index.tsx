@@ -72,9 +72,6 @@ const Header = async () => {
       <div className="md:hidden block   px-5 pb-2">
         <Search />
       </div>
-      <div>
-        <ModeToggle />
-      </div>
     </header>
   )
 }
