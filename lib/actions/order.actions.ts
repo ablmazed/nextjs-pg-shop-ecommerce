@@ -15,6 +15,7 @@ import { paypal } from '../paypal'
 import { revalidatePath } from 'next/dist/server/web/spec-extension/revalidate'
 import { PaymentResult } from '@/types'
 import { PAGE_SIZE } from '../constants'
+import { sendPurchaseReceipt } from '@/email'
 
 // GET
 
@@ -199,7 +200,7 @@ export const updateOrderToPaid = async ({
   if (!updatedOrder) {
     throw new Error('Order not found')
   }
-  // await sendPurchaseReceipt({ order: updatedOrder })
+  await sendPurchaseReceipt({ order: updatedOrder })
 }
 
 // UPDATE

@@ -1,17 +1,3 @@
-# 33. email order receipt by Resend
-
-1. .env.local
-
-   ```env
-        # GET RESEND KEY FROM https://resend.com
-        RESEND_API_KEY=???
-        SENDER_EMAIL=onboarding@resend.dev
-   ```
-
-2. npm add react-email
-3. email/purchase-receipt.tsx
-
-```tsx
 import sampleData from '@/lib/sample-data'
 import { formatCurrency } from '@/lib/utils'
 import { Order } from '@/types'
@@ -159,41 +145,3 @@ export default function PurchaseReceiptEmail({ order }: OrderInformationProps) {
     </Html>
   )
 }
-```
-
-4. email/index.tsx
-
-- npm install resend
-
-  ```tsx
-  import { Resend } from 'resend'
-  import { SENDER_EMAIL, APP_NAME } from '@/lib/constants'
-  import PurchaseReceiptEmail from './purchase-receipt'
-  import { Order } from '@/types'
-  const resend = new Resend(process.env.RESEND_API_KEY as string)
-  export const sendPurchaseReceipt = async ({ order }: { order: Order }) => {
-    const res = await resend.emails.send({
-      from: `${APP_NAME} <${SENDER_EMAIL}>`,
-      to: order.user.email,
-      subject: 'Order Confirmation',
-      react: <PurchaseReceiptEmail order={order} />,
-    })
-    console.log(res)
-  }
-  ```
-
-5. package.json
-
-```ts
-
- "email": "cp .env.local ./node_modules/react-email && email dev --dir email --port 3001"
-```
-
-6. lib/actions/order.actions.ts
-
-   ```ts
-        export const updateOrderToPaid = async () => {
-        ....
-        sendPurchaseReceipt({ order: updatedOrder })
-      }
-   ```
