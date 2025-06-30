@@ -9,6 +9,8 @@ import CredentialsProvider from 'next-auth/providers/credentials'
 import db from '@/db/drizzle'
 import { carts, users } from '@/db/schema'
 import { getSessionCartIdFromCookies } from '@/lib/getSessionCartId'
+import Resend from 'next-auth/providers/resend'
+import { APP_NAME, SENDER_EMAIL } from './lib/constants'
 
 export const config = {
   pages: {
@@ -50,6 +52,11 @@ export const config = {
 
         return null
       },
+    }),
+    Resend({
+      name: 'Email',
+      from: `${APP_NAME} <${SENDER_EMAIL}>`,
+      id: 'email',
     }),
   ],
   callbacks: {
