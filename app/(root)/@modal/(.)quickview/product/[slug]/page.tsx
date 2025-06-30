@@ -8,10 +8,15 @@ import { getProductBySlug } from '@/lib/actions/product.actions'
 import { notFound } from 'next/navigation'
 import ReloadButton from './reload-button'
 
-export default async function StorefrontProductQuickView(props: {
-  params: { slug: string }
-}) {
-  const product = await getProductBySlug(props.params.slug)
+type Props = {
+  params: Promise<{
+    slug: string
+  }>
+}
+
+export default async function StorefrontProductQuickView({ params }: Props) {
+  const { slug } = await params
+  const product = await getProductBySlug(slug)
   if (!product) return notFound()
   const cart = await getMyCart()
   return (
