@@ -42,6 +42,9 @@ export async function signInWithCredentials(
 export const SignInWithEmail = async (formData: any) => {
   await signIn('email', formData)
 }
+export const SignInWithGoogle = async () => {
+  await signIn('google')
+}
 
 export const SignOut = async () => {
   await signOut()
