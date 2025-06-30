@@ -1,7 +1,7 @@
 import { GoogleMap, Marker, useJsApiLoader } from '@react-google-maps/api'
 import React, { useEffect, useRef, useState } from 'react'
 
-const defaultLocation = { lat: 45.516, lng: -73.56 }
+const defaultLocation = { lat: 24.923025, lng: 89.950111 }
 
 function MyComponent({
   setShippingLocation,
