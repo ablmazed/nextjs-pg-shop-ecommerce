@@ -11,7 +11,7 @@ const ReloadButton = () => {
       variant="default"
       className="w-full"
     >
-      View Product
+      View Products
     </Button>
   )
 }
