@@ -5,5 +5,6 @@ type Props = {
 }
 
 export default async function QuickViewPage({ params }: Props) {
-  redirect(`/product/${(await params).slug}`)
+  const { slug } = await params
+  redirect(`/product/${slug}`)
 }
